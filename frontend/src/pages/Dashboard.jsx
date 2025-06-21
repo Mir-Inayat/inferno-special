@@ -344,10 +344,41 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Language Selection */}
-      <div className="language-section">
-        <span className="language-label">Choose Language:</span>
-        <select 
+      {/* Main Navigation Tabs */}
+      <div className="main-navigation">
+        <button
+          className={`nav-tab ${mainTab === 'documents' ? 'active' : ''}`}
+          onClick={() => setMainTab('documents')}
+        >
+          Documents
+        </button>
+        <button
+          className={`nav-tab ${mainTab === 'review' ? 'active' : ''}`}
+          onClick={() => setMainTab('review')}
+        >
+          Needs Review
+        </button>
+        <button
+          className={`nav-tab ${mainTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setMainTab('analytics')}
+        >
+          Analytics
+        </button>
+        <button
+          className={`nav-tab ${mainTab === 'editor' ? 'active' : ''}`}
+          onClick={() => setMainTab('editor')}
+        >
+          Document Editor
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {mainTab === 'documents' && (
+        <div className="documents-tab">
+          {/* Language Selection */}
+          <div className="language-section">
+            <span className="language-label">Choose Language:</span>
+            <select 
           value={selectedLanguage}
           onChange={(e) => setSelectedLanguage(e.target.value)}
           className="language-selector"
@@ -435,21 +466,42 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Content */}
-      {loading ? (
-        <div className="loading">Loading documents...</div>
-      ) : error ? (
-        <div className="error">Error: {error}</div>
-      ) : (
-        <>
-          {processedDocuments.length === 0 ? (
-            <div className="no-documents">
-              {searchTerm ? `No documents found matching "${searchTerm}"` : 'No documents found'}
-            </div>
+          {/* Content */}
+          {loading ? (
+            <div className="loading">Loading documents...</div>
+          ) : error ? (
+            <div className="error">Error: {error}</div>
           ) : (
-            viewMode === 'table' ? renderTableView() : renderCardView()
+            <>
+              {processedDocuments.length === 0 ? (
+                <div className="no-documents">
+                  {searchTerm ? `No documents found matching "${searchTerm}"` : 'No documents found'}
+                </div>
+              ) : (
+                viewMode === 'table' ? renderTableView() : renderCardView()
+              )}
+            </>
           )}
-        </>
+        </div>
+      )}
+
+      {/* Review Tab */}
+      {mainTab === 'review' && (
+        <ReviewTab onRefreshDocuments={fetchDocuments} />
+      )}
+
+      {/* Analytics Tab */}
+      {mainTab === 'analytics' && (
+        <AnalyticsDashboard />
+      )}
+
+      {/* Document Editor Tab */}
+      {mainTab === 'editor' && (
+        <DocumentEditor 
+          documentId={selectedDocumentId}
+          onDocumentSelect={setSelectedDocumentId}
+          onRefreshDocuments={fetchDocuments}
+        />
       )}
     </div>
   );
