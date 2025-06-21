@@ -704,28 +704,9 @@ def get_document_for_edit(document_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/documents/<document_id>/edit', methods=['PUT'])
-def update_document(document_id):
-    """Update document fields"""
-    try:
-        updates = request.get_json()
-        result = edit_manager.update_document(document_id, updates)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/documents/<document_id>', methods=['DELETE'])
-def delete_document(document_id):
-    """Delete document"""
-    try:
-        result = edit_manager.delete_document(document_id)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/documents/needs-review', methods=['GET'])
-def get_documents_needing_review():
-    """Get documents that need user review"""
+@app.route('/api/documents/needs-review-old', methods=['GET'])
+def get_documents_needing_review_old():
+    """Get documents that need user review (legacy endpoint)"""
     try:
         documents = edit_manager.get_documents_needing_review()
         return jsonify({
@@ -861,6 +842,136 @@ def get_quality_metrics():
             "status": "success",
             "quality_metrics": metrics
         })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Review Management Endpoints
+@app.route('/api/documents/review', methods=['GET'])
+def get_review_documents():
+    """Get documents that need human review"""
+    try:
+        from upload_manager import UploadManager
+        upload_manager = UploadManager()
+        
+        review_docs = upload_manager.get_documents_needing_review()
+        
+        return jsonify({
+            "status": "success",
+            "documents": review_docs
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/documents/<int:document_id>', methods=['PUT'])
+def update_document(document_id):
+    """Update document information"""
+    try:
+        from upload_manager import UploadManager
+        upload_manager = UploadManager()
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        success = upload_manager.update_document(document_id, data)
+        
+        if success:
+            return jsonify({
+                "status": "success",
+                "message": "Document updated successfully"
+            })
+        else:
+            return jsonify({"error": "Failed to update document"}), 400
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/documents/<int:document_id>', methods=['DELETE'])
+def delete_document(document_id):
+    """Delete a document"""
+    try:
+        from upload_manager import UploadManager
+        upload_manager = UploadManager()
+        
+        success = upload_manager.delete_document(document_id)
+        
+        if success:
+            return jsonify({
+                "status": "success",
+                "message": "Document deleted successfully"
+            })
+        else:
+            return jsonify({"error": "Document not found"}), 404
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Analytics Endpoints
+@app.route('/api/analytics', methods=['GET'])
+def get_analytics():
+    """Get comprehensive analytics data"""
+    try:
+        from reporting import ReportingManager
+        reporting_manager = ReportingManager()
+        
+        analytics = reporting_manager.get_system_analytics()
+        
+        return jsonify(analytics)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/analytics/charts', methods=['GET'])
+def get_chart_data():
+    """Get chart data for frontend"""
+    try:
+        from reporting import ReportingManager
+        reporting_manager = ReportingManager()
+        
+        chart_data = reporting_manager.get_chart_data_for_frontend()
+        
+        return jsonify(chart_data)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Report Generation Endpoints
+@app.route('/api/reports/excel', methods=['POST'])
+def generate_excel_report():
+    """Generate and download Excel report"""
+    try:
+        from reporting import ReportingManager
+        reporting_manager = ReportingManager()
+        
+        report_path = reporting_manager.generate_excel_report()
+        
+        return send_file(
+            report_path,
+            as_attachment=True,
+            download_name=f"document_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/reports/pdf', methods=['POST'])
+def generate_pdf_report():
+    """Generate and download PDF report with charts"""
+    try:
+        from reporting import ReportingManager
+        reporting_manager = ReportingManager()
+        
+        report_path = reporting_manager.generate_pdf_report_with_charts()
+        
+        return send_file(
+            report_path,
+            as_attachment=True,
+            download_name=f"document_analytics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            mimetype='application/pdf'
+        )
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500

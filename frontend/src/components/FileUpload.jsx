@@ -8,7 +8,10 @@ const FileUpload = () => {
   const [files, setFiles] = useState([]);
   const [uploadStatus, setUploadStatus] = useState({});
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadMode, setUploadMode] = useState('single'); // 'single', 'bulk', 'folder'
+  const [uploadProgress, setUploadProgress] = useState(null);
   const fileInputRef = useRef(null);
+  const folderInputRef = useRef(null);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -30,6 +33,16 @@ const FileUpload = () => {
 
   const handleFileInput = (e) => {
     const selectedFiles = Array.from(e.target.files);
+    handleFiles(selectedFiles);
+  };
+
+  const handleFolderInput = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setUploadProgress({
+      current: 0,
+      total: selectedFiles.length,
+      status: 'scanning'
+    });
     handleFiles(selectedFiles);
   };
 
@@ -228,34 +241,104 @@ const FileUpload = () => {
 
   return (
     <div className="file-upload-container">
+      {/* Upload Mode Selection */}
+      <div className="upload-mode-selector">
+        <button 
+          className={`mode-btn ${uploadMode === 'single' ? 'active' : ''}`}
+          onClick={() => setUploadMode('single')}
+        >
+          Single Files
+        </button>
+        <button 
+          className={`mode-btn ${uploadMode === 'bulk' ? 'active' : ''}`}
+          onClick={() => setUploadMode('bulk')}
+        >
+          Bulk Upload
+        </button>
+        <button 
+          className={`mode-btn ${uploadMode === 'folder' ? 'active' : ''}`}
+          onClick={() => setUploadMode('folder')}
+        >
+          Folder Upload
+        </button>
+      </div>
+
       <div
         className={`drop-zone ${isDragging ? 'dragging' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => {
+          if (uploadMode === 'folder') {
+            folderInputRef.current?.click();
+          } else {
+            fileInputRef.current?.click();
+          }
+        }}
       >
         <div className="drop-zone-content">
           <i className="fas fa-cloud-upload-alt"></i>
-          <p>Drag and drop files here or click to select</p>
-          <span className="supported-files">Supports PDF, Images, and Text files</span>
+          <p>
+            {uploadMode === 'folder' 
+              ? 'Drag and drop folders here or click to select'
+              : uploadMode === 'bulk'
+              ? 'Drag and drop multiple files or ZIP archives'
+              : 'Drag and drop files here or click to select'
+            }
+          </p>
+          <span className="supported-files">
+            {uploadMode === 'folder' 
+              ? 'Recursively processes all supported files in folders'
+              : 'Supports PDF, Images, Text files, and ZIP archives'
+            }
+          </span>
         </div>
+        
+        {/* Regular file input */}
         <input
           type="file"
           ref={fileInputRef}
           onChange={handleFileInput}
+          multiple={uploadMode !== 'single'}
+          accept=".pdf,.jpg,.jpeg,.png,.tiff,.txt,.zip"
+          hidden
+        />
+        
+        {/* Folder input */}
+        <input
+          type="file"
+          ref={folderInputRef}
+          onChange={handleFolderInput}
+          webkitdirectory="true"
           multiple
-          accept=".pdf,.jpg,.jpeg,.png,.tiff,.txt"
           hidden
         />
       </div>
 
       {files.length > 0 && (
         <div className="file-list">
+          {uploadProgress && (
+            <div className="upload-progress">
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ 
+                    width: `${(uploadProgress.current / uploadProgress.total) * 100}%` 
+                  }}
+                ></div>
+              </div>
+              <span className="progress-text">
+                {uploadProgress.status === 'scanning' ? 'Scanning files...' : 'Uploading...'} 
+                {uploadProgress.current}/{uploadProgress.total}
+              </span>
+            </div>
+          )}
+          
           {files.map((file, index) => (
             <div key={index} className="file-item">
               <div className="file-info">
                 <span className="file-name">{file.name}</span>
+                <span className="file-path">{file.webkitRelativePath || file.name}</span>
                 {uploadStatus[file.name]?.message && (
                   <span className={`file-${uploadStatus[file.name]?.status || 'error'}`}>
                     {uploadStatus[file.name].message}

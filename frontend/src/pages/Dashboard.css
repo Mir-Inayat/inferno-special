@@ -489,6 +489,65 @@
     animation: fadeIn 0.3s ease-out;
 }
 
+/* Main Navigation Tabs */
+.main-navigation {
+    display: flex;
+    gap: 0;
+    margin-bottom: 2rem;
+    background: #222;
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.nav-tab {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    background: transparent;
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-tab:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+}
+
+.nav-tab.active {
+    background: #6366f1;
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.nav-tab.active::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #ffffff;
+}
+
+/* Tab Content Containers */
+.documents-tab,
+.review-tab,
+.analytics-tab,
+.editor-tab {
+    background: #222;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-controls {
